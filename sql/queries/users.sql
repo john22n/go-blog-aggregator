@@ -13,3 +13,12 @@ FROM
   users
 WHERE
   name = $1;
+
+-- name: RemoveAllUsers :exec
+DELETE FROM users;
+
+-- name: GetUsers :many
+SELECT
+  name
+FROM
+  users;

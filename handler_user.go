@@ -18,7 +18,7 @@ func handlerLogin(s *state, cmd command) error {
 	if err != nil {
 		return fmt.Errorf("coudl not find user: %s", err)
 	}
-	err = s.Config.SetUser(user.Name)
+	err = s.cfg.SetUser(user.Name)
 	if err != nil {
 		return fmt.Errorf("couldnt set user: %w", err)
 	}
@@ -35,7 +35,7 @@ func handlerRegister(s *state, cmd command) error {
 	if err != nil {
 		return fmt.Errorf("couldnt create user: %s", err)
 	}
-	err = s.Config.SetUser(createdUser.Name)
+	err = s.cfg.SetUser(createdUser.Name)
 	if err != nil {
 		return fmt.Errorf("couldnt set the created user: %s", err)
 	}
@@ -46,4 +46,31 @@ func handlerRegister(s *state, cmd command) error {
 func printUser(user database.User) {
 	fmt.Printf(" * ID: %v\n", user.ID)
 	fmt.Printf(" * Name: %v\n", user.Name)
+}
+
+func handlerReset(s *state, cmd command) error {
+	err := s.db.RemoveAllUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("err deleting user rows: %s", err)
+	}
+	fmt.Println("user table rows reset")
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error {
+	currentUser := s.cfg.CurrentUsername
+	allUsers, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("issue getting all users: %s", err)
+	}
+
+	for _, user := range allUsers {
+		if currentUser == user {
+			fmt.Printf("* %s (current)\n", user)
+		} else {
+			fmt.Printf("* %s\n", user)
+		}
+	}
+
+	return nil
 }

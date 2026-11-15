@@ -39,6 +39,8 @@ func main() {
 	cmds := commands{registeredCommands: map[string]func(*state, command) error{}}
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerUsers)
 
 	if err := cmds.run(programState, cmd); err != nil {
 		log.Fatal(err)
