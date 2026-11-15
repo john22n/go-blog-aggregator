@@ -1,36 +1,46 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
-
 	"os"
 
 	"github.com/john22n/gator/internal/config"
+	"github.com/john22n/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
-	Config *config.Config
+	cfg *config.Config
+	db  *database.Queries
 }
 
 func main() {
-	Args := os.Args
-	if len(Args) < 2 {
-		os.Exit(1)
-	}
-
 	cfg, err := config.Read()
 	if err != nil {
 		log.Fatalf("error reading config: %v", err)
 	}
-	s := state{Config: &cfg}
+	Args := os.Args
+	if len(Args) < 2 {
+		log.Fatal("usage: cli <command> [args...]")
+	}
+
+	db, err := sql.Open("postgres", cfg.DbURL)
+	if err != nil {
+		log.Fatalf("error connecting to db: %v", err)
+	}
+	defer db.Close()
+
+	dbConfig := database.New(db)
+
+	programState := &state{cfg: &cfg, db: dbConfig}
 
 	cmd := command{name: Args[1], args: Args[2:]}
 	cmds := commands{registeredCommands: map[string]func(*state, command) error{}}
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 
-	if err := cmds.run(&s, cmd); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if err := cmds.run(programState, cmd); err != nil {
+		log.Fatal(err)
 	}
 }
