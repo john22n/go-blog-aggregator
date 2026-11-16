@@ -1,5 +1,7 @@
 package main
 
+import "errors"
+
 type command struct {
 	name string
 	args []string
@@ -10,11 +12,11 @@ type commands struct {
 }
 
 func (c *commands) run(s *state, cmd command) error {
-	err := c.registeredCommands[cmd.name](s, cmd)
-	if err != nil {
-		return err
+	f, ok := c.registeredCommands[cmd.name]
+	if !ok {
+		return errors.New("comamnd not found")
 	}
-	return nil
+	return f(s, cmd)
 }
 
 func (c *commands) register(name string, f func(*state, command) error) {
