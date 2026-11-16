@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/john22n/gator/internal/database"
-	"time"
 )
 
 func handlerLogin(s *state, cmd command) error {
@@ -31,7 +32,12 @@ func handlerRegister(s *state, cmd command) error {
 		return fmt.Errorf("expected a second arg: %s", cmd.name)
 	}
 	username := cmd.args[0]
-	createdUser, err := s.db.CreateUser(context.Background(), database.CreateUserParams{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now(), Name: username})
+	createdUser, err := s.db.CreateUser(context.Background(), database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      username,
+	})
 	if err != nil {
 		return fmt.Errorf("couldnt create user: %s", err)
 	}
