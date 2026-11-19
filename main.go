@@ -44,6 +44,8 @@ func main() {
 	cmds.register("agg", handlerAgg)
 	cmds.register("addfeed", handlerAddFeed)
 	cmds.register("feeds", handlerGetAllFeeds)
+	cmds.register("follow", handlerAddFollow)
+	cmds.register("following", handlerListFeedFollows)
 
 	if err := cmds.run(programState, cmd); err != nil {
 		log.Fatal(err)
