@@ -9,7 +9,7 @@ import (
 	"github.com/john22n/gator/internal/database"
 )
 
-func handlerAddFollow(s *state, cmd command) error {
+func handlerAddFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 1 {
 		return fmt.Errorf("missing url argument")
 	}
@@ -21,16 +21,11 @@ func handlerAddFollow(s *state, cmd command) error {
 		return fmt.Errorf("error getting feed by url: %w", err)
 	}
 
-	currentUser, err := s.db.GetUser(context.Background(), s.cfg.CurrentUsername)
-	if err != nil {
-		return fmt.Errorf("error getting user details from db: %w", err)
-	}
-
 	follow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 		FeedID:    currentFeed.ID,
 	})
 	if err != nil {
@@ -42,11 +37,7 @@ func handlerAddFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerListFeedFollows(s *state, cmd command) error {
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUsername)
-	if err != nil {
-		return fmt.Errorf("issue getting user info: %v", err)
-	}
+func handlerListFeedFollows(s *state, cmd command, user database.User) error {
 	follows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return fmt.Errorf("error getting follows: %w\n", err)
@@ -67,4 +58,29 @@ func printFollow(follow database.CreateFeedFollowRow) {
 func printFeedFollow(username, feedname string) {
 	fmt.Printf("* User: %s", username)
 	fmt.Printf("* Feed: %s", feedname)
+}
+
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("missing feed arg")
+	}
+
+	feedURL := cmd.args[0]
+	feed, err := s.db.GetFeedByUrl(context.Background(), feedURL)
+	if err != nil {
+		return fmt.Errorf("error getting feed: %w", err)
+	}
+
+	unfollowArgs := database.DeleteFeedFollowFromUserParams{
+		FeedID: feed.ID,
+		UserID: user.ID,
+	}
+
+	err = s.db.DeleteFeedFollowFromUser(context.Background(), unfollowArgs)
+	if err != nil {
+		return fmt.Errorf("error deleteing feed from user: %w", err)
+	}
+	fmt.Println("successfully removed feed from user")
+
+	return nil
 }

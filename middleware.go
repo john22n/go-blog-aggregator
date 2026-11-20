@@ -4,10 +4,20 @@ import (
 	//	"context"
 	//	"fmt"
 
+	"context"
+	"fmt"
+
 	"github.com/john22n/gator/internal/database"
 )
 
 func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
 
-	return nil
+	return func(s *state, cmd command) error {
+		user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUsername)
+		if err != nil {
+			return fmt.Errorf("error getting user info: %w", err)
+		}
+
+		return handler(s, cmd, user)
+	}
 }
