@@ -1,17 +1,24 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/john22n/gator/internal/rssfeed"
+	"time"
 )
 
 func handlerAgg(s *state, cmd command) error {
-	resp, err := rssfeed.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return fmt.Errorf("error fetching feed: %w", err)
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("missing time arg")
 	}
 
-	fmt.Printf("Feed: %+v\n", resp)
-	return nil
+	timeBetweenReqs, err := time.ParseDuration(cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("error parsing time args: %w", err)
+	}
+
+	ticker := time.NewTicker(timeBetweenReqs)
+
+	fmt.Printf("Colleting feed every: %v", timeBetweenReqs)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
 }
